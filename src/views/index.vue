@@ -26,7 +26,7 @@ onMounted(async () => {
 	/* 图层更换 */
 	// viewer.imageryLayers.remove(viewer.imageryLayers.get(2));
 	const blackMarble = Cesium.ImageryLayer.fromProviderAsync(
-		Cesium.IonImageryProvider.fromAssetId(2327529)
+		Cesium.IonImageryProvider.fromAssetId(2327554)
 	);
 	viewer.imageryLayers.add(blackMarble);
 
