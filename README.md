@@ -12,6 +12,14 @@ var viewer = new Cesium.Viewer('cesiumContainer', {
 });
 ```
 
+### 地球坐标系转换
+
+岁差章动计算(XYs):
+
+1. https://github.com/CesiumGS/EarthKAMExplorer/tree/master/Cesium/Assets/IAU2006_XYS
+2. https://blog.csdn.net/u011575168/article/details/108290011
+3. http://cesium.xin/cesium/en/Documentationb28/Iau2006XysData.html
+
 ### Imagery(图层)
 
 ## Engine
