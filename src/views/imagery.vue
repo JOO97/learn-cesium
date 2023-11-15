@@ -23,6 +23,7 @@ onMounted(async () => {
 		terrain: Cesium.Terrain.fromWorldTerrain({
 			requestWaterMask: true,
 		}),
+
 		// baseLayer: Cesium.ImageryLayer.fromWorldImagery({
 		// 	style: Cesium.IonWorldImageryStyle.AERIAL_WITH_LABELS,
 		// }),
@@ -53,11 +54,11 @@ onMounted(async () => {
 	 * 加载高德瓦片服务
 	 */
 	const aMap = new Cesium.UrlTemplateImageryProvider({
-		url: 'https://webst02.is.autonavi.com/appmaptile?style=7&x={x}&y={y}&z={z}',
+		url: 'http://webst01.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}',
 		maximumLevel: 18,
 		minimumLevel: 1,
 		credit: 'Amap',
-		// tilingScheme: new GCJ02TilingScheme(), //坐标系转换
+		tilingScheme: new GCJ02TilingScheme(), //坐标系转换
 	});
 	layer.addImageryProvider(aMap);
 

@@ -1,4 +1,3 @@
-<!-- Tower -->
 <template>
 	<!-- 容器 -->
 	<div id="cesiumContainer" style="width: 100vw; height: 100vh" />
@@ -9,241 +8,176 @@ import { onMounted } from 'vue';
 import * as Cesium from 'cesium';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 
-import towerData from './tower/towers.json';
-
-window.Cesium = Cesium;
-
+Cesium.Ion.defaultAccessToken =
+	'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhMzNkNTE5Zi1mMjY4LTRiN2QtOTRlZC1lOTUyM2NhNDYzNWYiLCJpZCI6NTU0OTYsImlhdCI6MTYyNTAyNjMyOX0.a2PEM4hQGpeuMfeB9-rPp6_Gkm6O-02Dm4apNbv_Dlk';
+// 设置默认视角
+Cesium.Camera.DEFAULT_VIEW_RECTANGLE = Cesium.Rectangle.fromDegrees(
+	89.5, // 西边的经度
+	20.4, // 南边纬度
+	110.4, // 东边经度
+	61.2 // 北边纬度
+);
 let viewer = null;
 
-onMounted(async () => {
-	Cesium.Ion.defaultAccessToken =
-		'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyZDk3ZjUxYS0zMzkyLTQ3NWEtYmM1Ny0zMTUxM2ZlMDFjMjMiLCJpZCI6MTczNDg2LCJpYXQiOjE2OTgxMjgzODV9.xSyHyR2dPE4dvRqOh5pl1dFSsTg0zcDyQ0g-82OzqV4';
-
-	viewer = new Cesium.Viewer('cesiumContainer', {
-		terrain: Cesium.Terrain.fromWorldTerrain({
-			requestVertexNormals: true,
-			requestWaterMask: true,
-		}),
-		// terrainProvider: new Cesium.CesiumTerrainProvider({
-		// 	url: 'http://data.xtgis.cn/terrain',
-		// 	requestWaterMask: true,
-		// 	requestVertexNormals: true,
-		// }),
-		// imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
-		// 	url: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer',
-		// }),
-	});
-	// viewer.scene.fxaa = true;
-	// viewer.scene.postProcessStages.fxaa.enabled = true;
-	// viewer.scene.globe.enableLighting = true;
-
-	addTowers();
-});
-
-function addTowers() {
-	const labels = viewer.scene.primitives.add(new Cesium.LabelCollection());
-	let polylines1 = [];
-	let polylines2 = [];
-	let polylines3 = [];
-	let polylines4 = [];
-
-	towerData.forEach((tower, index) => {
-		const position = Cesium.Cartesian3.fromDegrees(tower.longitude, tower.latitude, tower.height);
-		const headingPitchRoll = new Cesium.HeadingPitchRoll(
-			Cesium.Math.toRadians(tower.degree),
-			Cesium.Math.toRadians(0),
-			Cesium.Math.toRadians(0)
-		);
-
-		let [point1, point2, point3, point4] = getLinkedPositions(position, tower.degree);
-
-		if (index === 0) {
-			polylines1.push(point1);
-			polylines2.push(point2);
-			polylines3.push(point3);
-			polylines4.push(point4);
-		} else {
-			let positions = generateCurve(polylines1[polylines1.length - 1], point1);
-			polylines1 = polylines1.concat(positions);
-
-			positions = generateCurve(polylines2[polylines2.length - 1], point2);
-			polylines2 = polylines2.concat(positions);
-
-			positions = generateCurve(polylines3[polylines3.length - 1], point3);
-			polylines3 = polylines3.concat(positions);
-
-			positions = generateCurve(polylines4[polylines4.length - 1], point4);
-			polylines4 = polylines4.concat(positions);
-		}
-
-		const orientation = Cesium.Transforms.headingPitchRollQuaternion(position, headingPitchRoll);
-		const entity = viewer.entities.add({
-			position,
-			orientation,
-			model: {
-				uri: '/src/assets/models/tower.glb',
-				colorBlendMode: Cesium.ColorBlendMode.HIGHLIGHT,
-				color: Cesium.Color.WHITE, //.withAlpha(0.5),
-				scale: 1,
-				maximumScale: 1,
+/* 初始化 */
+onMounted(() => {
+	/* 1 Cesium.Viewer */
+	const viewer = new Cesium.Viewer('cesiumContainer', {
+		// 是否显示信息窗口
+		infoBox: false,
+		// 是否显示查询按钮
+		geocoder: false,
+		// 不显示home按钮
+		homeButton: false,
+		// 控制查看器的显示模式
+		sceneModePicker: false,
+		// 是否显示图层选择
+		baseLayerPicker: false,
+		// 是否显示帮助按钮
+		navigationHelpButton: false,
+		// 是否播放动画
+		animation: false,
+		// 是否显示时间轴
+		timeline: false,
+		// 是否显示全屏按钮
+		fullscreenButton: false,
+		contextOptions: {
+			webgl: {
+				antialias: true,
 			},
-		});
-		addLabel(labels, position, index + 1);
-		if (index === 0) viewer.flyTo(entity);
-	});
-
-	// 绘制路线
-	drawGuideLine(polylines1, '#ffffff');
-	drawGuideLine(polylines2, '#00ff00');
-	drawGuideLine(polylines3, '#0000ff');
-	drawGuideLine(polylines4, '#ff0000');
-}
-
-/**
- * Add Labels
- * @param {*} labels
- * @param {*} position
- * @param {*} index
- */
-function addLabel(labels, position, index) {
-	labels.add({
-		position: position,
-		text: index + '',
-		font: '32px Helvetica',
-		horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
-		verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-		distanceDisplayCondition: new Cesium.DistanceDisplayCondition(90, 50000),
-		eyeOffset: new Cesium.Cartesian3(0.0, 80.0, 0.0),
-	});
-}
-
-/**
- * Draw line
- * @param {*} positions
- * @param {*} color
- */
-function drawGuideLine(positions, color) {
-	// var graphic = new mars3d.graphic.PolylinePrimitive({
-	// 	positions: positions,
-	// 	style: {
-	// 		width: 4,
-	// 		color: color,
-	// 	},
-	// });
-	// graphicLayer.addGraphic(graphic);
-	// const arr = [];
-	// positions.forEach((item) => {
-	// 	arr.push(item.x);
-	// 	arr.push(item.y);
-	// 	arr.push(item.z);
-	// });
-	viewer.entities.add({
-		name: 'Blue dashed line',
-		polyline: {
-			positions,
-			width: 4,
-			material: new Cesium.Color.fromCssColorString(color),
 		},
 	});
-}
 
-/**
- * 获取杆塔的连接点坐标
- * @param {*} position
- * @param {*} angle
- */
-function getLinkedPositions(position, angle) {
-	return [
-		getPositionByOffsetAndAngle(position, new Cesium.Cartesian3(0, 9, 51.5), angle),
-		getPositionByOffsetAndAngle(position, new Cesium.Cartesian3(0, -9, 51.5), angle),
-		getPositionByOffsetAndAngle(position, new Cesium.Cartesian3(0, -12, 47.5), angle),
-		getPositionByOffsetAndAngle(position, new Cesium.Cartesian3(0, 12, 47.5), angle),
+	//鼠标中键修改为地图缩放效果
+	viewer.scene.screenSpaceCameraController.zoomEventTypes = [
+		Cesium.CameraEventType.WHEEL,
+		Cesium.CameraEventType.PINCH,
 	];
-}
+	//鼠标右键修改为地图视角旋转效果
+	viewer.scene.screenSpaceCameraController.tiltEventTypes = [
+		Cesium.CameraEventType.PINCH,
+		Cesium.CameraEventType.RIGHT_DRAG,
+	];
+	// 隐藏logo
+	viewer.cesiumWidget.creditContainer.style.display = 'none';
 
-/**
- * 获取两点之间的曲线
- * @param {*} pos1
- * @param {*} pos2
- */
-function generateCurve(pos1, pos2) {
-	let newPos = new Cesium.Cartesian3();
-	Cesium.Cartesian3.add(pos1, pos2, newPos);
-	var newPos2 = new Cesium.Cartesian3();
-	Cesium.Cartesian3.divideByScalar(newPos, 0x2, newPos2),
-		((newPos = Cesium['Cartographic']['fromCartesian'](newPos2))['height'] =
-			0.98 * newPos['height'] - 0.05 * Cesium.Cartesian3['distance'](pos1, pos2)),
-		(newPos2 = new Cesium.Cartesian3()),
-		Cesium['Ellipsoid']['WGS84']['cartographicToCartesian'](newPos, newPos2);
-	for (
-		var _0x8b45e1 = new Cesium['CatmullRomSpline']({
-				times: [0x0, 0.5, 0x1],
-				points: [pos1, newPos2, pos2],
+	// 是否支持图像渲染像素化处理
+	// if (Cesium.FeatureDetection.supportsImageRenderingPixelated()) {
+	// 	viewer.resolutionScale = window.devicePixelRatio;
+	// }
+	// if (Cesium.FeatureDetection.supportsImageRenderingPixelated()) {
+	// 	var vtxf_dpr = window.devicePixelRatio;
+	// 	while (vtxf_dpr >= 2.0) {
+	// 		vtxf_dpr /= 2.0;
+	// 	}
+	// 	viewer.resolutionScale = vtxf_dpr;
+	// }
+	// 开启抗锯齿
+	viewer.scene.fxaa = false;
+	viewer.scene.postProcessStages.fxaa.enabled = false;
+
+	createPrimitive(viewer);
+});
+
+const createPrimitive = (viewer) => {
+	/**
+	 * 1 单个带颜色图元
+	 * SimplePolylineGeometry
+	 */
+	var primitive = new Cesium.Primitive({
+		geometryInstances: new Cesium.GeometryInstance({
+			geometry: new Cesium.SimplePolylineGeometry({
+				positions: Cesium.Cartesian3.fromDegreesArray([
+					// 118.109676, 24.481108, 118.144355, 24.438919, 118.086327, 24.421414,
+					118.128998, 24.494612, 118.149927, 24.466838,
+				]),
+				// vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
 			}),
-			_0x2f47cc = [],
-			_0x4ac740 = 0x0;
-		_0x4ac740 < 0xc8;
-		_0x4ac740++
-	)
-		_0x2f47cc['push'](_0x8b45e1['evaluate'](_0x4ac740 / 0xc8));
-	return _0x2f47cc;
-}
+			attributes: {
+				color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+					new Cesium.Color(1.0, 1.0, 1.0, 1.0)
+				),
+			},
+		}),
+		appearance: new Cesium.PerInstanceColorAppearance({
+			flat: true,
+			translucent: false,
+		}),
+	});
 
-/**
- * 通过原始点, 原始点的hpr, 偏移量计算出新的坐标点
- * @param {*} pos
- * @param {*} offset
- * @param {*} hpr
- */
-function getPositionByOffsetAndAngle(pos, offset, angle) {
-	var _localToWorld_Matrix = Cesium.Transforms.eastNorthUpToFixedFrame(pos);
-	var pos = Cesium.Matrix4.multiplyByTranslation(
-		_localToWorld_Matrix,
-		offset,
-		new Cesium.Matrix4()
-	);
-	var offset = Cesium.Matrix4.getTranslation(pos, new Cesium.Cartesian3());
-	pos = Cesium.Matrix4.inverse(_localToWorld_Matrix, new Cesium.Cartesian3());
-	pos = Cesium.Matrix4.multiplyByPoint(pos, offset, new Cesium.Cartesian3());
-	var angle = Cesium.Matrix3.fromRotationZ(Cesium.Math.toRadians(-angle));
-	pos = Cesium.Matrix3.multiplyByVector(angle, pos, new Cesium.Cartesian3());
-	return (offset = Cesium.Matrix4.multiplyByPoint(
-		_localToWorld_Matrix,
-		pos,
-		new Cesium.Cartesian3()
-	));
-}
+	/**
+	 * 2 单个带颜色图元(每段线颜色不同)
+	 * SimplePolylineGeometry
+	 */
+	//创建多段线和每段颜色随机的
+	const positions11 = [];
+	const colors1 = [];
+	for (let j = 0; j <= 50; j += 5) {
+		positions11.push(Cesium.Cartesian3.fromDegrees(108.94388 + j, 34.319, 5000.0 * (j % 10)));
+		colors1.push(Cesium.Color.fromRandom({ alpha: 1.0 }));
+	}
 
-function getTowerAngle(_0x2da7da, _0x4d347e) {
-	return (
-		(_0x2da7da = (function (_0x569274, _0x47e280) {
-			var _0x22e8b5 = a0_0x366f;
-			return (
-				(_0x47e280 = Cesium.Cartesian3.subtract(_0x47e280, _0x569274, new Cesium.Cartesian3())),
-				(_0x47e280 = Cesium.Cartesian3.normalize(_0x47e280, new Cesium.Cartesian3())),
-				(_0x47e280 = Cesium.Transforms.rotationMatrixFromPositionVelocity(
-					_0x569274,
-					_0x47e280,
-					Cesium.Ellipsoid.WGS84
-				)),
-				Cesium.Matrix4.fromRotationTranslation(_0x47e280, _0x569274)
-			);
-		})(_0x2da7da, _0x4d347e)),
-		(_0x4d347e = _0x2da7da),
-		(_0x2da7da = Cesium.Transforms.eastNorthUpToFixedFrame(
-			Cesium.Matrix4.getTranslation(_0x4d347e, new Cesium.Cartesian3()),
-			Cesium.Ellipsoid.WGS84,
-			new Cesium.Matrix4()
-		)),
-		(_0x4d347e = Cesium.Matrix4.multiply(
-			Cesium.Matrix4.inverse(_0x2da7da, new Cesium.Matrix4()),
-			_0x4d347e,
-			new Cesium.Matrix4()
-		)),
-		(_0x4d347e = Cesium.Matrix4.getMatrix3(_0x4d347e, new Cesium.Matrix3())),
-		(_0x4d347e = Cesium.Quaternion.fromRotationMatrix(_0x4d347e)),
-		(_0x4d347e = Cesium.HeadingPitchRoll.fromQuaternion(_0x4d347e)),
-		Cesium.Math.toDegrees(_0x4d347e['heading'])
+	const primitive2 = new Cesium.Primitive({
+		geometryInstances: new Cesium.GeometryInstance({
+			geometry: new Cesium.SimplePolylineGeometry({
+				positions: positions11,
+				colors: colors1,
+				// arcType: Cesium.ArcType.NONE,
+				// vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
+				colorsPerVertex: true, //对于逐顶点着色 颜色过渡
+			}),
+			attributes: {
+				// NOTE: 这里的color优先与geometry的colors
+				// color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+				// 	new Cesium.Color(1.0, 1.0, 1.0, 1.0)
+				// ),
+			},
+		}),
+		appearance: new Cesium.PerInstanceColorAppearance({
+			flat: true,
+			translucent: false,
+			renderState: { lineWidth: Math.min(5.0, viewer.scene.maximumAliasedLineWidth) },
+		}),
+	});
+
+	/**
+	 * 2 一个图元中有两个矩形，并且具有不同的颜色。
+	 */
+	var instance = new Cesium.GeometryInstance({
+		geometry: new Cesium.RectangleGeometry({
+			rectangle: Cesium.Rectangle.fromDegrees(0.0, 20.0, 10.0, 30.0),
+		}),
+		attributes: {
+			color: new Cesium.ColorGeometryInstanceAttribute(1.0, 0.0, 0.0, 0.5),
+		},
+	});
+
+	var anotherInstance = new Cesium.GeometryInstance({
+		geometry: new Cesium.RectangleGeometry({
+			rectangle: Cesium.Rectangle.fromDegrees(0.0, 40.0, 10.0, 50.0),
+		}),
+		attributes: {
+			color: new Cesium.ColorGeometryInstanceAttribute(0.0, 0.0, 1.0, 0.5),
+		},
+	});
+
+	var rectanglePrimitive = new Cesium.Primitive({
+		geometryInstances: [instance, anotherInstance],
+		appearance: new Cesium.PerInstanceColorAppearance(),
+	});
+
+	viewer.scene.primitives.add(primitive);
+	viewer.scene.primitives.add(primitive2);
+	viewer.scene.primitives.add(rectanglePrimitive);
+
+	//视角飞行至立方体
+	viewer.camera.flyTo(
+		{
+			destination: Cesium.Cartesian3.fromDegrees(108.94388, 34.319, 10000), // 目的地的经纬度坐标
+			duration: 4,
+		} // 动画持续时间，默认为3秒
 	);
-}
+};
 </script>
+
+<style lang="scss" scoped></style>
