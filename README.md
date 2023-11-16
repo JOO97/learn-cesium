@@ -100,3 +100,17 @@ arcType
 4. PerInstanceColorAppearance：带有颜色属性的[`GeometryInstance`](https://www.vvpstk.com/public/Cesium/Documentation/GeometryInstance.html)实例的外观。 用于根据每个实例的颜色属性来设置每个实例的外观。这个类常用于需要为每个实例指定不同颜色的场景，如点云数据可视化。
 5. PolylineMaterialAppearance：用于设置折线或线段的外观，可以通过指定材质属性来定义Primitive对象的外观，如颜色、透明度、线宽等。
 
+
+
+## Material
+
+
+
+### Fabric
+
+
+
+
+
+
+
