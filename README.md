@@ -12,7 +12,7 @@ var viewer = new Cesium.Viewer('cesiumContainer', {
 });
 ```
 
-### 地球坐标系转换
+### 坐标系
 
 #### 岁差章动计算(XYs):
 
@@ -36,13 +36,43 @@ var viewer = new Cesium.Viewer('cesiumContainer', {
 
 3. 笛卡尔空间直角坐标系:  世界坐标(x,y,z), 采用右手系, Cartesian3 
 
-
+ 
 
 ![image-20231123110321285](C:/Users/LEGION/AppData/Roaming/Typora/typora-user-images/image-20231123110321285.png)
 
-4. 局部坐标 [TODO]
+4. **局部坐标
 
-> blog: https://blog.csdn.net/weixin_45782925/article/details/123365834
+> blog: 
+>
+> 1. https://blog.csdn.net/weixin_45782925/article/details/123365834
+> 2. https://www.zhoulujun.cn/html/theory/Mathematics/Geometry/8330.html
+
+Cesium.Transforms.eastNorthUpToFixedFrame
+
+> eastNorthUp 对应 x,y,z
+
+````js
+//绕点旋转示例
+	const center = Cesium.Cartesian3.fromRadians(
+		2.4213211833389243,
+		0.6171926869414084,
+		3626.0426275055174
+	);
+//创建矩阵
+	const transform = Cesium.Transforms.eastNorthUpToFixedFrame(center);
+	viewer.scene.camera.lookAtTransform(
+		transform,
+		new Cesium.HeadingPitchRange(0, -Math.PI / 4, 2900)
+	);
+	// Orbit this point
+	viewer.clock.onTick.addEventListener(function (clock) {
+		viewer.scene.camera.rotateRight(0.005);
+	});
+````
+
+
+
+
 
 #### 坐标转换
 
@@ -223,6 +253,18 @@ const pickHandler = (viewer) => {
 };
 ````
 
+### 矩阵[TODO]
+
+> blog: https://www.seekstack.cn/post/780
+
+- Cesium.Cartesian3（相当于Point3D）
+- Cesium.Matrix3（3x3矩阵，用于描述**旋转**变换）
+- Cesium.Matrix4（4x4矩阵，用于描述**旋转加平移**变换）
+- Cesium.Quaternion（四元数，用于描述围绕某个向量**旋转一定角度**的变换）
+- Cesium.Transforms(包含将位置转换为各种**参考系**的功能)
+
+
+
 ### Camera
 
 
@@ -337,7 +379,7 @@ ImageryLayerCollection
 
 
 
-
+## Entity
 
 
 
@@ -352,6 +394,10 @@ ImageryLayerCollection
 > 3. 创建图元(Primitive)： geometryInstances 、appearance
 
 ### Geometry
+
+
+
+
 
 #### polyline
 
@@ -434,3 +480,10 @@ fract
 
 
 
+
+
+
+
+## 0
+
+![image-20231124094632861](https://s2.loli.net/2023/11/24/akEFyrcSfqG7mb4.png)

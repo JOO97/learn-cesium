@@ -1,4 +1,4 @@
-<!-- Entity -->
+<!-- Primitive -->
 <template>
 	<!-- 容器 -->
 	<div id="cesiumContainer" style="width: 100vw; height: 100vh" />
@@ -8,7 +8,6 @@
 import { onMounted } from 'vue';
 import * as Cesium from 'cesium';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
-import { point } from '@turf/turf';
 
 window.Cesium = Cesium;
 
@@ -16,11 +15,6 @@ let viewer = null;
 
 const longitude = 118.127582;
 const latitude = 24.457932;
-const objectsToExclude = [];
-const cartographic = new Cesium.Cartographic();
-const range = 0.000001;
-const duration = 4.0;
-let p = null;
 
 onMounted(async () => {
 	/* Token */
@@ -50,24 +44,36 @@ onMounted(async () => {
 		// 是否播放动画
 		animation: false,
 		// 是否显示时间轴
-		timeline: true,
-		shouldAnimate: true,
+		timeline: false,
+		shouldAnimate: false,
 		// 是否显示全屏按钮
 		fullscreenButton: true,
 		/* 默认地形 */
-		terrain: Cesium.Terrain.fromWorldTerrain({
-			requestVertexNormals: true, //光照效果
-			requestWaterMask: false, //水文贴图
-		}),
+		// terrain: Cesium.Terrain.fromWorldTerrain({
+		// 	requestVertexNormals: true, //光照效果
+		// 	requestWaterMask: false, //水文贴图
+		// }),
 	});
 
+	//鼠标中键修改为地图缩放效果
+	viewer.scene.screenSpaceCameraController.zoomEventTypes = [
+		Cesium.CameraEventType.WHEEL,
+		Cesium.CameraEventType.PINCH,
+	];
+	//鼠标右键修改为地图视角旋转效果
+	viewer.scene.screenSpaceCameraController.tiltEventTypes = [
+		Cesium.CameraEventType.PINCH,
+		Cesium.CameraEventType.RIGHT_DRAG,
+	];
+
 	/* NOTE: 开启地形深度测试 */
-	viewer.scene.globe.depthTestAgainstTerrain = true;
+	// viewer.scene.globe.depthTestAgainstTerrain = true;
 
 	/**
 	 * Camera
 	 */
-	const pos = Cesium.Cartesian3.fromDegrees(longitude, latitude, 1000);
+	const pos = Cesium.Cartesian3.fromDegrees(longitude, latitude, 6000);
+
 	/* setView */
 	viewer.camera.setView({
 		destination: pos,
@@ -78,186 +84,149 @@ onMounted(async () => {
 		},
 	});
 
-	/**
-	 * 通过按键移动相机
-	 */
-	document.addEventListener('keydown', (e) => {
-		// 获取相机离地面的高度
-		var height = viewer.camera.positionCartographic.height;
-		var moveRate = height / 100;
-		if (e.key == 'w') {
-			// 设置相机向前移动
-			viewer.camera.moveForward(moveRate);
-		} else if (e.key == 's') {
-			// 设置相机向后移动
-			viewer.camera.moveBackward(moveRate);
-		} else if (e.key == 'a') {
-			// 设置相机向左移动
-			viewer.camera.moveLeft(moveRate);
-		} else if (e.key == 'd') {
-			// 设置相机向右移动
-			viewer.camera.moveRight(moveRate);
-		} else if (e.key == 'q') {
-			// 设置相机向左旋转相机
-			viewer.camera.lookLeft(Cesium.Math.toRadians(0.1));
-		} else if (e.key == 'e') {
-			// 设置相机向右旋转相机
-			viewer.camera.lookRight(Cesium.Math.toRadians(0.1));
-		} else if (e.key == 'r') {
-			// 设置相机向上旋转相机
-			viewer.camera.lookUp(Cesium.Math.toRadians(0.1));
-		} else if (e.key == 'f') {
-			// 设置相机向下旋转相机
-			viewer.camera.lookDown(Cesium.Math.toRadians(0.1));
-		} else if (e.key == 'g') {
-			// 向左逆时针翻滚
-			viewer.camera.twistLeft(Cesium.Math.toRadians(0.1));
-		} else if (e.key == 'h') {
-			// 向右顺时针翻滚
-			viewer.camera.twistRight(Cesium.Math.toRadians(0.1));
-		}
-	});
-
-	addEntities(viewer);
+	addPrimitives();
 });
 
 /**
- * 添加Entities
- * @param {*} viewer
+ * Add Primitives
  */
-const addEntities = async (viewer) => {
-	const image = new Image();
-	image.src = 'texture/gzt.png';
-	const entity = viewer.entities.add({
-		position: Cesium.Cartesian3.fromDegrees(118.080109, 24.437955, 0),
-		/* label */
-		label: {
-			text: 'xxxx',
-			font: '24px sans-serif',
-			fillColor: Cesium.Color.WHITE,
-			outlineColor: Cesium.Color.BLACK,
-			outlineWidth: 4,
-			// FILL填充文字，OUTLINE勾勒标签，FILL_AND_OUTLINE填充文字和勾勒标签
-			style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-			// 设置文字的偏移量
-			pixelOffset: new Cesium.Cartesian2(0, -24),
-			// 设置文字的显示位置,LEFT /RIGHT /CENTER
-			horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
-			// 设置文字的显示位置
-			verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-			showBackground: true,
-		},
-		/* billboard */
-		billboard: {
-			// scaleByDistance: new Cesium.NearFarScalar(1.5e2, 5.0, 1.5e7, 0.5),
-			image,
-			width: 100,
-			height: 100,
-			verticalOrigin: Cesium.VerticalOrigin.TOP,
-			horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
-		},
-		/* point */
-		point: {
-			pixelSize: 10,
-			color: Cesium.Color.RED,
-			outlineColor: Cesium.Color.WHITE,
-			outlineWidth: 4,
+const addPrimitives = () => {
+	const collection = new Cesium.PrimitiveCollection();
+	viewer.scene.primitives.add(collection);
+	// const geometry = new Cesium.Geometry({});
+
+	// const boxGeometry = Cesium.BoxGeometry.fromDimensions({
+	// 	dimensions: new Cesium.Cartesian3.from(400000.0, 300000.0, 50000.0),
+	// 	vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
+	// });
+	/**
+	 * 通过 轴对齐边界框 创建
+	 */
+	const boundingBox = Cesium.AxisAlignedBoundingBox.fromPoints(
+		Cesium.Cartesian3.fromDegreesArray([
+			-72.0, 40.0, -70.0, 35.0, -75.0, 30.0, -70.0, 30.0, -68.0, 40.0,
+		])
+	);
+	const boxGeometry = Cesium.BoxGeometry.fromDimensions({
+		dimensions: new Cesium.Cartesian3(400000.0, 300000.0, 50000.0),
+		vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
+		minimum: boundingBox.minimum,
+		maximum: boundingBox.maximum,
+	});
+
+	const boxGeometryInstance = new Cesium.GeometryInstance({
+		geometry: boxGeometry,
+		attributes: {
+			color: Cesium.ColorGeometryInstanceAttribute.fromColor(new Cesium.Color.fromRandom()),
 		},
 	});
-	console.log('entity', entity);
-
-	// 添加3D建筑
-	const osmBuildings = viewer.scene.primitives.add(await Cesium.createOsmBuildingsAsync());
-
-	/* Add Model */
-	const airplane = viewer.entities.add({
-		name: 'Airplane',
-		position: Cesium.Cartesian3.fromDegrees(longitude, latitude, 0),
-		model: {
-			uri: 'model/GroundVehicle.glb',
-			// 最小像素
-			minimumPixelSize: 128,
-			// 飞机的轮廓
-			silhouetteSize: 5,
-			// 轮廓的颜色
-			silhouetteColor: Cesium.Color.WHITE,
-			// 相机距离模型多远的距离显示
-			distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 200000),
-			// 颜色
-			color: Cesium.Color.RED,
-			colorBlendMode: Cesium.ColorBlendMode.HIGHLIGHT,
-			colorBlendAmount: 0.5,
-		},
-	});
-	viewer.trackedEntity = airplane;
 
 	/**
-	 * 绘制动态点
+	 * RectangleGeometry
 	 */
-	addAnimatedPoint(viewer);
-};
-
-/**
- * 更新位置
- * @param {*} time
- * @param {*} result
- * @param {*} viewer
- * @param {*} model
- */
-const updatePoint = (time, result) => {
-	if (!p) return;
-	const offset = (time.secondsOfDay % duration) / duration;
-
-	// var carto = Cesium.Cartographic.fromDegrees(longitude, latitude, 0);
-	// cartographic.longitude = carto.longitude - range + offset * range * 2.0;
-	// cartographic.latitude = carto.latitude;
-
-	const lng = Cesium.Math.toRadians(longitude);
-	const lat = Cesium.Math.toRadians(latitude);
-	cartographic.longitude = lng - range + offset * range * 2.0;
-	cartographic.latitude = lat;
-
-	let height;
-	if (viewer.scene.sampleHeightSupported) {
-		/**
-		 * sampleHeight
-		 * NOTE: 贴地计算
-		 */
-		height = viewer.scene.sampleHeight(cartographic, objectsToExclude);
-	}
-
-	if (Cesium.defined(height)) {
-		cartographic.height = height;
-		p.label.text = `${Math.abs(height).toFixed(2).toString()} m`;
-		p.label.show = true;
-	} else {
-		cartographic.height = 0.0;
-		p.label.show = false;
-	}
-
-	return Cesium.Cartographic.toCartesian(cartographic, Cesium.Ellipsoid.WGS84, result);
-};
-
-const addAnimatedPoint = (viewer, model) => {
-	const _point = viewer.entities.add({
-		name: 'AnimatedPoint',
-		position: new Cesium.CallbackProperty(updatePoint, false),
-		point: {
-			pixelSize: 10,
-			color: Cesium.Color.RED,
-			disableDepthTestDistance: Number.POSITIVE_INFINITY,
-		},
-		label: {
-			show: false,
-			showBackground: true,
-			font: '14px monospace',
-			horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
-			verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-			pixelOffset: new Cesium.Cartesian2(5, 5),
-			disableDepthTestDistance: Number.POSITIVE_INFINITY,
+	const rectangleGeometry = new Cesium.RectangleGeometry({
+		rectangle: Cesium.Rectangle.fromDegrees(118.083253, 24.488308, 118.094468, 24.49806),
+		height: 500,
+		extrudedHeight: 10,
+		vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
+	});
+	const rectangleGeometryInstance = new Cesium.GeometryInstance({
+		id: 'rectangle',
+		geometry: rectangleGeometry,
+		attributes: {
+			color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+				new Cesium.Color.fromRandom({ alpha: 1 })
+			),
 		},
 	});
-	p = _point;
-	objectsToExclude[0] = _point;
+	const rectangleGeometry2 = new Cesium.RectangleGeometry({
+		rectangle: Cesium.Rectangle.fromDegrees(118.102691, 24.488308, 118.112691, 24.49806),
+		height: 500,
+		extrudedHeight: 10,
+		vertexFormat: Cesium.EllipsoidSurfaceAppearance.VERTEX_FORMAT,
+	});
+	const rectangleGeometryInstance2 = new Cesium.GeometryInstance({
+		id: 'rectangle',
+		geometry: rectangleGeometry2,
+		attributes: {},
+	});
+
+	/**
+	 * Appearance
+	 */
+
+	/**
+	 * Cesium.Primitive
+	 */
+	const primitive = new Cesium.Primitive({
+		geometryInstances: [rectangleGeometryInstance],
+		appearance: new Cesium.PerInstanceColorAppearance({
+			flat: false,
+		}),
+		asynchronous: false,
+	});
+	collection.add(primitive);
+
+	const primitive2 = new Cesium.Primitive({
+		geometryInstances: [rectangleGeometryInstance2],
+		appearance: new Cesium.EllipsoidSurfaceAppearance({
+			// flat: false,
+			material: Cesium.Material.fromType('Stripe'),
+		}),
+		asynchronous: false,
+	});
+	collection.add(primitive2);
+
+	/* appearance: PerInstanceColorAppearance */
+	const instances = [];
+	for (let lon = -180.0; lon < 180.0; lon += 5.0) {
+		for (let lat = -85.0; lat < 85.0; lat += 5.0) {
+			instances.push(
+				new Cesium.GeometryInstance({
+					geometry: new Cesium.RectangleGeometry({
+						rectangle: Cesium.Rectangle.fromDegrees(lon, lat, lon + 5.0, lat + 5.0),
+						height: 0,
+						extrudedHeight: Cesium.Math.randomBetween(100, 100000),
+						vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
+					}),
+					attributes: {
+						color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+							Cesium.Color.fromRandom({ alpha: 0.5 })
+						),
+					},
+				})
+			);
+		}
+	}
+	collection.add(
+		new Cesium.Primitive({
+			geometryInstances: instances,
+			appearance: new Cesium.PerInstanceColorAppearance(),
+		})
+	);
+
+	// viewer.scene.requestRender();
+	// primitive.update();
+
+	// const attributes = primitive.getGeometryInstanceAttributes('box');
+	// viewer.camera.lookAtTransform(attributes.boundingSphere.transform);
+
+	// 获取 Primitive 的边界球
+	// var boundingSphere = boxPrimitive.getBoundingSphere();
+
+	// // 将摄像机定位到 Primitive
+	// viewer.camera.viewBoundingSphere(boundingSphere, new Cesium.HeadingPitchRange(0, -Math.PI / 4, boundingSphere.radius * 3));
+	// viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
+
+	// 监听场景渲染完成事件
+	let flag = false;
+	viewer.scene.postRender.addEventListener(() => {
+		if (flag) return;
+		// flag = true;
+		// viewer.camera.flyTo({
+		// 	destination: primitive._instanceBoundingSpheres[0].center, // 目的地的经纬度坐标
+		// 	orientation: new Cesium.HeadingPitchRoll(0, -45, 0),
+		// });
+	});
 };
 </script>
