@@ -1,4 +1,65 @@
-# CesiumJs
+# CesiumJS
+
+> Learning Paths
+>
+> 1. cesium api
+>
+> ![image-20240120195610510](/Users/joo/Library/Application Support/typora-user-images/image-20240120195610510.png)
+>
+> 2. create a demo or webGL
+> 3. cesium source code
+> 4. cesium with threejs and babylon.js
+> 5. ...
+>
+> Repo
+>
+> 1. learn-cesium
+> 2. learn-cesium-source-code
+> 3. cesium-xiamen-app: basic demo
+
+
+
+
+
+
+
+
+
+
+
+📄Doc
+
+1. 中文doc
+
+   http://cesium.xin/cesium/cn/Documentation1.62/index.html
+
+
+
+🔗Blog
+
+1. https://www.cnblogs.com/telwanggs/p/11124237.html
+2. http://marsgis.cn/doc/study-cesium.pdf
+
+
+
+
+
+📚 Course
+
+1. https://www.bilibili.com/video/BV12g411U7Us/?spm_id_from=333.999.0.0&vd_source=35abcff391e951c0b56e70fd7f32e2dc
+2. https://ke.qq.com/course/468292#term_id=100560563
+
+
+
+💻Repo
+
+1. https://github.com/YanzheZhang/Cesium.HPUZYZ.Demo
+
+
+
+
+
+
 
 ## Concept
 
@@ -262,6 +323,24 @@ const pickHandler = (viewer) => {
 - Cesium.Matrix4（4x4矩阵，用于描述**旋转加平移**变换）
 - Cesium.Quaternion（四元数，用于描述围绕某个向量**旋转一定角度**的变换）
 - Cesium.Transforms(包含将位置转换为各种**参考系**的功能)
+
+
+
+## Viewer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
