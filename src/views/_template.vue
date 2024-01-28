@@ -1,7 +1,3 @@
-<template>
-	<div id="cesiumContainer" style="width: 100vw; height: 100vh" />
-</template>
-
 <script setup>
 import { onMounted } from 'vue';
 import * as Cesium from 'cesium';
@@ -50,3 +46,7 @@ onMounted(async () => {
 	];
 });
 </script>
+
+<template>
+	<div id="cesiumContainer" style="width: 100vw; height: 100vh" />
+</template>

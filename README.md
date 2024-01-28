@@ -39,6 +39,7 @@
 
 1. https://www.cnblogs.com/telwanggs/p/11124237.html
 2. http://marsgis.cn/doc/study-cesium.pdf
+3. https://www.cnblogs.com/fuckgiser/p/5706842.html
 
 
 
@@ -56,6 +57,16 @@
 1. https://github.com/YanzheZhang/Cesium.HPUZYZ.Demo
 
 
+
+🔠Keywords
+
+1. STK地形服务
+
+> STK（Systems Tool Kit）地形服务是由 Analytical Graphics, Inc.（AGI）提供的一种地形服务解决方案，它支持高精度和高解析度的全球地形数据。在地理空间应用和仿真中，STK地形服务常被用来提供精确的地形模型，以支持各种分析和可视化需求。
+
+2. TIN网格
+
+> TIN（Triangulated Irregular Network）网格是一种用于表示三维地理空间数据的方法。它通过连接不规则分布的点来形成三角形网格，从而构建出地表的三维模型。TIN 网格在地理信息系统（GIS）中广泛应用，特别是在地形建模和分析中。
 
 
 
@@ -529,6 +540,217 @@ const imageryLayerCollection = viewer.scene.imageryLayers;
 
 #### Terrain
 
+> `Terrain` 是指地球表面的三维地形，而 `TerrainData` 是这些地形在特定区域的具体数据表示。`TerrainData` 为 `Terrain` 提供了必要的详细信息，使得 CesiumJS 能够渲染出真实的三维地形。
+
+
+
+##### Cesium.Terrain
+
+> 地形数据本身
+
+````js
+const terrain = new Cesium Terrain(terrainProviderPromise)
+viewer.scene.setTerrain(terrain)
+````
+
+- 世界地形 Cesium.Terrain.fromWorldTerrain(options)
+
+  
+
+
+
+##### Cesium.TerrainProvider
+
+> 抽象基类
+>
+> 负责每一个Tile对应的地形数据的构建
+>
+> 地形图层只能有一个
+
+- Cesium.CesiumTerrainProvider
+
+  > 从 Cesium Ion 或兼容的服务器加载量化网格地形（Quantized Mesh Terrain）数据
+  >
+  > 使用了 STK 提供的地形服务
+
+- Cesium.ArcGISTiledElevationTerrainProvider
+
+  > arcgis提供的高度图
+  >
+  > 不支持法线，水面，但可以选择TileScheme
+
+````js
+const terrainProvider = await Cesium.ArcGISTiledElevationTerrainProvider.fromUrl(
+		'https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer',
+		{
+			token: ACCESS_TOKEN.ArcGis,
+		}
+	);
+	viewer.terrainProvider = terrainProvider;
+````
+
+- Cesium.GoogleEarthEnterpriseTerrainProvider
+
+- Cesium.EllipsoidTerrainProvider 以光滑、规则的椭球形状来代表地球表面, 不带地形信息
+
+  > tileScheme默认使用`GeographicTilingScheme`
+
+- Cesium.VRTheWorldTerrainProvider
+
+
+
+##### Cesium.TerrainData
+
+> 抽象基类
+>
+> TerrainProvider提供TerrainData
+
+- Cesium.QuantizedMeshTerrainData 量化网格地形
+  - **定义**：`QuantizedMeshTerrainData` 表示一种量化网格地形数据，这种数据格式主要用于表示复杂的地形。
+  - **数据结构**：在量化网格格式中，地形被表示为一系列相互连接的三角形。这些三角形的顶点位置是量化的，以减少所需的存储空间。
+  - **特点**：量化网格格式适用于高精度和高变化率的地形，如山脉或峡谷。它能够更精确地渲染地形的细微变化。
+  - **使用场景**：当需要渲染高度详细和不规则的地形时，`QuantizedMeshTerrainData` 是更合适的选择。
+  - **文件类型**：量化网格地形通常存储为特定的文件类型，如 `.terrain`，这是一种针对地形数据的二进制格式。
+- Cesium.HeightmapTerrainData 高程图地形
+  - **定义**：`HeightmapTerrainData` 表示一种基于高程图的地形数据。高程图是一种更简单的表示方式，它使用一个二维数组来存储地形的高程信息。
+  - **数据结构**：在高程图格式中，每个数组元素代表一个网格点的高程值。这些点通常以规则的网格排列。
+  - **特点**：高程图格式相对简单，易于处理和理解。它适用于相对平坦或变化不大的地形。
+  - **使用场景**：对于不需要高度复杂地形的应用，如显示大范围平缓地区的地形，`HeightmapTerrainData` 是一个合适的选择。
+  - **文件类型**：高程图数据可以存储在多种文件类型中，常见的如图片格式（PNG, JPG）或二进制格网格式。
+- Cesium.GoogleEarthEnterpriseTerrainData Google Earth Enterprise 地形数据
+
+
+
+##### sampleTerrain
+
+> 查询指定位置指定等级的高程信息
+
+````js
+// 定义查询的位置（经纬度坐标）
+	var positions = [
+		Cesium.Cartographic.fromDegrees(114.0, 38.0),
+		Cesium.Cartographic.fromDegrees(115.0, 39.0),
+	];
+	// 查询地形高程
+	Cesium.sampleTerrain(terrainProvider, 11, positions).then(function (updatedPositions) {
+		// 使用查询结果
+		for (var i = 0; i < updatedPositions.length; ++i) {
+			console.log('位置 ' + i + ' 的高程：' + updatedPositions[i].height);
+		}
+	});
+````
+
+##### sampleTerrainMostDetailed
+
+> 查询地形提供者（TerrainProvider）提供的最详细等级
+
+````js
+Cesium.sampleTerrainMostDetailed(terrainProvider, positions).then(function (updatedPositions) {
+		// 使用查询结果
+		for (var i = 0; i < updatedPositions.length; ++i) {
+			console.log('sampleTerrainMostDetailed 位置 ' + i + ' 的高程：' + updatedPositions[i].height);
+		}
+	});
+````
+
+
+
+
+
+### DataSource
+
+#### Cesium.DataSource
+
+> 抽象基类
+>
+> - **数据源类型**：Cesium 提供了多种数据源类型，每种类型对应不同的数据格式或数据服务。例如，`GeoJsonDataSource` 用于加载 GeoJSON 数据，`KmlDataSource` 用于加载 KML 数据。
+> - **实体（Entity）**：数据源中的数据项通常被表示为“实体”（Entity）。一个实体可以是一个点、线、多边形、模型或其他图形对象，具有位置、外观和行为等属性。
+
+- Cesium.GeoJsonDataSource： 加载geojson/topojson
+
+- Cesium.KmlDataSource
+
+  加载kml/kmz
+
+- Cesium.CzmlDataSource 加载ceisum的czml数据
+
+````js
+viewer.dataSources.add(Cesium.CzmlDataSource.load(url)).then((dataSource) => {viewer.flyTo(dataSource.entities);
+	});
+````
+
+- Cesium.GpxDataSource 加载gps设备记录的数据（.gpx）
+- Cesium.CustomDataSource 自定义数据源
+
+````js
+const dataSource = new Cesium.CustomDataSource('joo');
+	dataSource.entities.add({
+		position: Cesium.Cartesian3.fromDegrees(122, 29, 0),
+		billboard: {
+			image: '/SampleData/fire.png',
+		},
+	});
+	dataSources.add(dataSource);
+	viewer.flyTo(dataSource.entities);
+````
+
+
+
+##### DataSourceDisplay
+
+>  是一个核心组件，负责管理和渲染来自各种数据源（如 GeoJSON, KML, CZML 等）的实体（Entity）。`DataSourceDisplay` 将数据源中的原始数据转换成可视化的图形，并确保它们正确地显示在 CesiumJS 场景（Scene）中。
+>
+> 一般不直接调用
+
+##### DataSourceClock
+
+> 用于表示与特定数据源相关联的时间设置。这个对象定义了如何根据时间动态显示数据源中的内容，比如 CZML 中的动态实体。`DataSourceClock` 通常包含关于开始时间、结束时间、当前时间和时钟速率的信息。
+
+
+
+#### Cesium.DataSourceCollection
+
+> DataSource集合
+
+
+
+[TODO]
+
+##### KML
+
+- Cesium.KmlTour
+- Cesium.KmlTourFlyTo
+- Cesium.KmlTourWait
+
+
+
+##### CZML
+
+> CZML是一种JSON格式的字符串，用于描述与时间有关的动画场景，CZML包含点、线、地标、模型和其他的一些图形元素，并指明了这些元素如何随时间而变化。
+>
+> Cesium和CZML的关系就像Google Earth和KML的关系
+>
+> doc
+>
+> 1. https://github.com/AnalyticalGraphicsInc/czml-writer/wiki/Packet
+> 2. https://github.com/AnalyticalGraphicsInc/czml-writer/wiki/CZML-Structure
+
+
+
+
+
+
+
+### Camere
+
+
+
+
+
+
+
+
+
 
 
 
@@ -554,7 +776,7 @@ const imageryLayerCollection = viewer.scene.imageryLayers;
 
 
 
-#### Camere
+#### 
 
 
 
@@ -797,6 +1019,16 @@ fract
 
 > 用于计算一个浮点数的小数部分。它返回一个介于0和1之间的值，表示原始浮点数的小数部分。
 >
+
+
+
+
+
+
+
+
+
+
 
 
 

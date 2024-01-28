@@ -71,7 +71,6 @@ onMounted(async () => {
 	/* Google Map Terrain Provider */
 	// const geeMetadata = await GoogleEarthEnterpriseMetadata.fromUrl('http://www.example.com');
 	// const gee = Cesium.GoogleEarthEnterpriseTerrainProvider.fromMetadata(geeMetadata);
-	N;
 	/**
 	 * sampleTerrain 查询高程信息
 	 */
