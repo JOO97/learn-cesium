@@ -1,5 +1,5 @@
 <script setup>
-import mainView from './views/index.vue';
+import mainView from './views/2_Scene_Imagery.vue';
 </script>
 
 <template>

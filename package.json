@@ -1,23 +1,22 @@
 {
-	"name": "learn-cesium",
-	"private": true,
-	"version": "0.0.0",
-	"type": "module",
-	"scripts": {
-		"dev": "vite",
-		"build": "vite build",
-		"preview": "vite preview"
-	},
-	"dependencies": {
-		"@turf/turf": "^6.5.0",
-		"cesium": "^1.110.0",
-		"coordtransform": "^2.1.2",
-		"mars3d": "^3.6.10",
-		"vite-plugin-cesium": "^1.2.22",
-		"vue": "^3.3.4"
-	},
-	"devDependencies": {
-		"@vitejs/plugin-vue": "^4.2.3",
-		"vite": "^4.4.5"
-	}
+  "name": "learn-cesium",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@turf/turf": "^6.5.0",
+    "cesium": "^1.113.0",
+    "coordtransform": "^2.1.2",
+    "vite-plugin-cesium": "^1.2.22",
+    "vue": "^3.3.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.2.3",
+    "vite": "^4.4.5"
+  }
 }

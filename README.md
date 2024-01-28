@@ -19,9 +19,9 @@
 
 
 
+🗓️TODO
 
-
-
+1. 封装高德地图/天地图...imageryProvider
 
 
 
@@ -59,6 +59,20 @@
 
 
 
+## 图形学
+
+### 抗锯齿
+
+
+
+#### MSAA
+
+> 多重采样抗锯齿   Multisampling Antialising
+
+
+
+
+
 
 
 ## Concept
@@ -80,6 +94,10 @@ var viewer = new Cesium.Viewer('cesiumContainer', {
 1. https://github.com/CesiumGS/EarthKAMExplorer/tree/master/Cesium/Assets/IAU2006_XYS
 2. https://blog.csdn.net/u011575168/article/details/108290011
 3. http://cesium.xin/cesium/en/Documentationb28/Iau2006XysData.html
+
+
+
+
 
 #### 坐标类型
 
@@ -326,8 +344,42 @@ const pickHandler = (viewer) => {
 
 
 
+
+
+
+
 ## Viewer
 
+> steps:
+>
+> new Cesium.Viewer(container, options)
+>
+> => 
+>
+> - create container
+>
+> - new CesiumWidget(container, options)
+>
+>   => 
+>
+>   - new Scene(options)
+>
+>     => 
+>
+>     - setup mapProjection
+>     - new Camera()
+>
+>   - Set the globe to scene: new Globe()
+>
+>   - Set the base imagery layer to scene
+>
+>   - Set the terrain provider to scene
+>
+>   - render by ellipsoid info
+>
+> - ...other widgets
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/9ed08baa8f784fc7a6009596fabd59c1.png)
 
 
 
@@ -335,6 +387,219 @@ const pickHandler = (viewer) => {
 
 
 
+### Scene
+
+> 1. 基础地理环境设置
+>    如地球参数(globe)、光照(light)、雾(fog)、大气(skyAtmosphere)
+> 2. 图层
+> 3. 场景数据
+> 4. 交互：相机、pick...
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/7382c0cc0d814df38b06ba4c68562f67.png)
+
+
+
+
+
+#### Imagery
+
+> blog: https://zhuanlan.zhihu.com/p/340669216
+
+
+
+##### ImageryLayer
+
+> 1. create imagerLayer
+> 2. viewer.scene.imageryLayers.add(imageryLayer)
+
+- 从ImageryLayer创建 
+
+  ````js
+  const provider = new Cesium.XXXImageryProvider()
+  const imagery = new Cesium.ImageryLayer(provider)
+  viewer.scene.imageryLayers.add(imagery)
+  ````
+
+- cesium默认地底图 `Cesium.ImageryLayer.fromWorldImagery()`
+
+- 异步创建 Cesium.ImageryLayer.fromProviderAsync
+
+  - `Cesion Ion`
+
+  ````js
+  Cesium.ImageryLayer.fromProviderAsync(        Cesium.IonImageryProvider.fromAssetId(4))
+  ````
+
+
+
+##### ImageryProvider
+
+> 抽象基类
+>
+> 核心方法和属性
+>
+> - **requestImage(x, y, level)**：请求指定级别和坐标的地图瓦片。
+> - **rectangle**：表示该影像提供者覆盖的地理区域。
+> - **tileWidth** 和 **tileHeight**：瓦片的宽度和高度。
+> - **minimumLevel** 和 **maximumLevel**：支持的最小和最大缩放级别。
+> - **getTileCredits(x, y, level)**：获取加载特定瓦片时所需的版权信息或其他信用信息。
+
+1. **ArcGisMapServerImageryProvider**： 用于从 ArcGIS Server 加载地图服务。
+
+````js
+Cesium.ArcGisMapService.defaultAccessToken = ACCESS_TOKEN.ArcGis;
+
+const arcGisBaseMap = Cesium.ArcGisMapServerImageryProvider.fromBasemapType(
+		Cesium.ArcGisBaseMapType.OCEANS
+	);
+	layer.add(Cesium.ImageryLayer.fromProviderAsync(arcGisBaseMap));
+	const arcGisFromUrl = await Cesium.ArcGisMapServerImageryProvider.fromUrl(
+		'https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer',
+		{
+			token: ACCESS_TOKEN.ArcGis,
+		}
+	);
+layer.add(Cesium.ImageryLayer.fromProviderAsync(arcGisFromUrl));
+
+````
+
+
+
+2. **BingMapsImageryProvider**： 从 Bing Maps 获取影像图层。
+3. **OpenStreetMapImageryProvider**
+4. **GoogleEarthEnterpriseImageryProvider**： 用于加载 Google Earth 企业服务器的影像数据。
+5. **SingleTileImageryProvider**： 用于加载单个图片作为影像图层
+6. **TileMapServiceImageryProvider**: tms，加载离线瓦片
+7. **GridImageryProvider** (经纬度网格图层)和 **TileCoordinatesImageryProvider**（瓦片坐标图层）
+
+
+
+1. **WebMapServiceImageryProvider (WMS)**： 用于加载符合 WMS 标准的服务。
+2. ‼️**WebMapTileServiceImageryProvider (WMTS)**： 用于加载符合 WMTS 标准的瓦片服务。
+3. **UrlTemplateImageryProvider**： 通过 URL 模板从自定义服务加载影像。
+
+
+
+##### tilingScheme
+
+> 用于定义如何将球体或椭球体的表面分割为瓦片（tiles）
+
+````js
+const aMap = new Cesium.UrlTemplateImageryProvider({
+		url: 'http://webst01.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}',
+		maximumLevel: 18,
+		minimumLevel: 1,
+		credit: 'Amap',
+		//NOTE: 需要转换坐标系
+		tilingScheme: new GCJ02TilingScheme(),
+		proxy: '/proxy/',
+	});
+````
+
+- GeographicTilingScheme
+
+  > 用于创建基于地理坐标系统（经度和纬度）的瓦片
+
+- WebMercatorTilingScheme
+
+  > 用于创建基于 Web Mercator 投影的瓦片，这是许多在线地图服务（如 Google Maps 和 Bing Maps）使用的标准
+
+- 自定义TilingScheme 
+
+`GCJ02TilingScheme extends WebMercatorTilingScheme`
+
+
+
+##### ImageryLayerCollection
+
+> Cesium.ImageryLayerCollection类是ImageryLayer类对象的容器，它可以装载、放置多个ImageryLayer或ImageryProvider类对象，而且它内部放置的ImageryLayer或ImageryProvider类对象是有序的
+
+`viewer.scene.imageryLayers:ImageryLayerCollection`
+
+![image-20240121204201356](/Users/joo/Library/Application Support/typora-user-images/image-20240121204201356.png)
+
+````js
+const viewer = new Cesium Viewer(...)
+const imageryLayerCollection = viewer.scene.imageryLayers;                          
+````
+
+
+
+
+
+#### Terrain
+
+
+
+
+
+
+
+### 图元
+
+> 图元是Cesium用来绘制三维对象的一个独立的结构。图元类有：Globe、Model、Primitive、BillboardCollection、ViewportQuad等。
+>
+> Globe绘制的是全球地形，它需要两个东西，一个是地形高程信息，另外一个是影像图层，也就是地球的表皮。影像图层可以叠加多个，但是地形高程只能有一个。整个地形的绘制也是渐进式的，即视线看到的地方才会去调度相关的地形高程信息，找到对应位置的地形影像贴上。然而Globe只是一个图元。由此可见一个图元可以相当复杂。
+>
+> 需要注意的地方：
+>
+> 图元没有基类，但是所有的图元都会有update函数；
+> Primitive类直译过来是图元的意思，但是它不是基类，只是图元的一种，起作用是用来绘制各种几何体。
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/927d8cae834d4490a41c9f11a32b9295.png)
+
+
+
+
+
+
+
+#### Camere
+
+
+
+
+
+#### Ellipsoid
+
+> 椭球体
+
+new Cesium.Ellipsoid(x, y, z)
+
+- Cesium.Ellipsoid.WGS84 : WGS84 标准的 Ellipsoid 实例
+- Cesium.Ellipsoid.MOON: 月球
+- Cesium.Ellipsoid.UNIT_SPHERE： 初始化为 (1.0, 1.0, 1.0) 的半径
+- Cesium.Ellipsoid.packedLength：椭球体数据的二进制数据长度
+
+
+
+
+
+### 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Performance
+
+> @see https://cesium.com/blog/2018/01/24/cesium-scene-rendering-performance/
+
+#### RequestRenderMode 请求渲染模式
+
+viewer.scene.render()  显式渲染
 
 
 
@@ -372,41 +637,7 @@ const pickHandler = (viewer) => {
 
 
 
-### Imagery(图层)
-
-> blog: https://zhuanlan.zhihu.com/p/340669216
-
-ImageryLayer
-
-````js
-{
-  baseLayer: Cesium.ImageryLayer.fromProviderAsync(
-	Cesium.ArcGisMapServerImageryProvider.fromBasemapType(Cesium.ArcGisBaseMapType.SATELLITE)
-		)
-}
-
-	/* 底图 */
-	const imageryLayers = viewer.scene.imageryLayers;
-
-	const tms = imageryLayers.addImageryProvider(
-		new Cesium.UrlTemplateImageryProvider({
-			url: 'http://webrd02.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
-			layer: 'tdtVecBasicLayer',
-			style: 'default',
-			format: 'image/png',
-			tileMatrixSetID: 'GoogleMapsCompatible',
-		})
-	);
-	tms.alpha = 0.5;
-````
-
-ImageryProvider
-
-ImageryLayerCollection
-
-
-
-### Terrain
+### 
 
 
 
