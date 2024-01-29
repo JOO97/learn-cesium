@@ -68,6 +68,10 @@
 
 > TIN（Triangulated Irregular Network）网格是一种用于表示三维地理空间数据的方法。它通过连接不规则分布的点来形成三角形网格，从而构建出地表的三维模型。TIN 网格在地理信息系统（GIS）中广泛应用，特别是在地形建模和分析中。
 
+3. ICRF
+
+> ICRF（International Celestial Reference Frame，国际天球参考框架）是用于描述天体相对于远处恒星的固定坐标系统。它常用于精确的天文观测和空间导航，特别是在模拟卫星轨道和太空任务时。
+
 
 
 ## 图形学
@@ -745,6 +749,28 @@ const dataSource = new Cesium.CustomDataSource('joo');
 
 
 
+##### HeadingPitchRoll
+
+> heading: 偏航（yaw），绕y轴
+>
+> pitch： 俯仰角，绕x轴
+>
+> roll： 滚动，绕z轴
+
+![img](https://img-blog.csdn.net/20181017222938187?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTE1NzUxNjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
+
+![roll(滚转)](https://img-blog.csdn.net/20181017221349352?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTE1NzUxNjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -831,12 +857,6 @@ viewer.scene.render()  显式渲染
 
 
 
-### Camera
-
-
-
-
-
 
 
 
@@ -885,18 +905,6 @@ viewer.scene.render()  显式渲染
 
 
 
-### HeadingPitchRoll
-
-> heading: 偏航（yaw），绕y轴
->
-> pitch： 俯仰角，绕x轴
->
-> roll： 滚动，绕z轴
-
-![img](https://img-blog.csdn.net/20181017222938187?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTE1NzUxNjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
-
-![roll(滚转)](https://img-blog.csdn.net/20181017221349352?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTE1NzUxNjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
-
 
 
 ## Widgets
@@ -916,8 +924,6 @@ viewer.scene.render()  显式渲染
 
 
 
-
-## Camera
 
 
 
